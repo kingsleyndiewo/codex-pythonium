@@ -47,34 +47,35 @@ def plotRevCBG(revenueDB):
 	# width of bars
 	width = 0.35
 	largest = 0
-	# create a plot for each product
-	subPlots = []
-	valueLists = []
-	for row, product in enumerate(products):
-		# get the value list
-		valuesList = tuple(revenueDB['revenue'][product])
-		valueLists.append(valuesList)
-		if row == 0:
-			# this is the first one
-			subPlot = plot.bar(locs, valuesList, width)
-		else:
-			# put the previous data below it
-			subPlot = plot.bar(locs, valuesList, width, bottom=valueLists[row - 1])
-		# add to the list
-		subPlots.append(subPlot)
-	# get maximum value for Y-axis (the tallest bar)
-	sums = [sum(x) for x in zip(*valueLists)]
-	largest = max(sums)
-	# add 10% on top
-	largest *= 1.1
 	# plot basics
 	plot.ylabel('Sales Revenue (KES)')
 	plot.title('Monthly sales revenue for Foo Traders by Region and Product')
 	xticks = regions
 	plot.xticks(locs, xticks)
-	# make ticks from 0 to the largest value possible when stacked
-	plot.yticks(np.arange(0, largest, (largest - (largest % 10)) / 10))
-	plot.legend(tuple([p[0] for p in subPlots]), tuple([n for n in products]))
+	# for stacking
+	subPlots = []
+	plotLayers = []
+	# generate each layer of the stack, which is a simple bar plot of product revenue by region
+	# =========================================================================================
+	for row, product in enumerate(products):
+		# get the value list
+		plotLayer = tuple(revenueDB['revenue'][product])
+		if row == 0:
+			# this is the first one
+			subPlot = plot.bar(locs, plotLayer, width)
+		else:
+			# put the sum of previous data as its floor
+			floorValues = [sum(x) for x in zip(*plotLayers)]
+			subPlot = plot.bar(locs, plotLayer, width, bottom=floorValues)
+		# add values to plotLayers
+		plotLayers.append(plotLayer)
+		# add to the list
+		subPlots.append(subPlot)
+		# update the legend
+		plot.legend(tuple([p[0] for p in subPlots]), tuple([n for n in products[:row + 1]]))
+		# we can display the plot to show how it is progressing
+		#plot.show()
+	# =========================================================================================
 	# show the plot
 	plot.show()
 
