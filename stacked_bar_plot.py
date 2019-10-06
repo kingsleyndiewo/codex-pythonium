@@ -4,12 +4,12 @@ import numpy as np
 from datetime import date
 
 # function to fetch workbook data and return sanitized dictionary
-def getExcelData(filePath = 'stacked_plot_data.xlsx'):
+def getExcelData(filePath = 'Sample Data.xlsx'):
 	# load the file
 	revenue = load_workbook(filename = filePath, read_only=True)
 	# we only need the first worksheet
 	workSheet = revenue.get_sheet_by_name(revenue.sheetnames[0])
-	data = {}
+	data = {'revenue': {}, 'regions': []}
 	products = None
 	# loop through rows
 	for r in workSheet.iter_rows():
@@ -19,35 +19,40 @@ def getExcelData(filePath = 'stacked_plot_data.xlsx'):
 		# Skip header row
 		if regionName == 'REGION':
 			# get the product names
-			data['products'] = r[1].value, r[2].value, r[3].value, r[4].value
+			products = r[1].value, r[2].value, r[3].value, r[4].value
 			continue
-		# add region to dictionary
-		data[regionName] = {'revenue': [r[1].value, r[2].value, r[3].value, r[4].value]}
+		# add region name to regions
+		data['regions'].append(regionName)
+		# add product to dictionary
+		for i, p in enumerate(products):
+			if p not in data['revenue']:
+				data['revenue'][p] = []
+			# add the product revenue of current region to the list for this product
+			data['revenue'][p].append(r[i + 1].value)
 	# we should have all the revenue data now
 	return data
 
 # function to plot a compound bar graph of all regions on x and product revenues on Y for the totals
 def plotRevCBG(revenueDB):
+	# get the region names
+	regions = revenueDB['regions']
 	# get the product names
-	products = revenueDB['products']
-	# remove the products key so we remain with regions
-	del revenueDB['products']
-	regions = list(revenueDB.keys())
+	products = list(revenueDB['revenue'].keys())
 	# sort the names
-	regions.sort()
+	products.sort()
 	# number of x elements
-	N = len(products)
+	N = len(regions)
 	# get the locations for the x-axis
 	locs = np.arange(N)
 	# width of bars
 	width = 0.35
 	largest = 0
-	# create a plot for each region
+	# create a plot for each product
 	subPlots = []
 	valueLists = []
-	for row, region in enumerate(regions):
+	for row, product in enumerate(products):
 		# get the value list
-		valuesList = tuple(revenueDB[region]['revenue'])
+		valuesList = tuple(revenueDB['revenue'][product])
 		valueLists.append(valuesList)
 		if row == 0:
 			# this is the first one
@@ -60,7 +65,7 @@ def plotRevCBG(revenueDB):
 	# get maximum value for Y-axis (the tallest bar)
 	sums = [sum(x) for x in zip(*valueLists)]
 	largest = max(sums)
-	# add 5% on top
+	# add 10% on top
 	largest *= 1.1
 	# plot basics
 	plot.ylabel('Sales Revenue (KES)')
@@ -68,7 +73,7 @@ def plotRevCBG(revenueDB):
 	xticks = regions
 	plot.xticks(locs, xticks)
 	# make ticks from 0 to the largest value possible when stacked
-	plot.yticks(np.arange(0, largest, 10))
+	plot.yticks(np.arange(0, largest, (largest - (largest % 10)) / 10))
 	plot.legend(tuple([p[0] for p in subPlots]), tuple([n for n in products]))
 	# show the plot
 	plot.show()
