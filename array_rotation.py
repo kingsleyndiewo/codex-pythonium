@@ -1,5 +1,5 @@
-# you can write to stdout for debugging purposes, e.g.
-# print("this is a debug message")
+# CyclicRotation
+# Rotate an array to the right by a given number of steps. 
 
 def solution(A, K):
 	# write a right rotation function

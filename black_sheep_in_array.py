@@ -1,5 +1,6 @@
-# you can write to stdout for debugging purposes, e.g.
-# print("this is a debug message")
+# OddOccurrencesInArray
+# Find value that occurs in odd number of elements. 
+
 from collections import Counter
 
 def solution(A):
@@ -11,5 +12,3 @@ def solution(A):
 	# find the value that has an odd frequency
 	black_sheep = [x[0] for x in frequencies.items() if x[1] % 2 > 0][0]
 	return black_sheep
-
-print(solution([9, 3, 9, 3, 9, 7, 9]))
